@@ -1,95 +1,101 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
-contract MNFT is ERC721URIStorage {
-    uint public tokenCount;
-    uint public itemCount;
+contract VideoNFTMarketplace is ERC721URIStorage {
+    uint public tokenCount; 
+    uint public itemCount; 
 
     struct Item {
-        uint itemId;
-        uint tokenId;
-        uint viewFee;  
-        address payable seller;
-        bool hasPaidForView; 
-        address viewer;  
+        uint itemId; 
+        uint tokenId; 
+        uint price; 
+        address payable seller; 
         bool sold; 
     }
 
     event Offered(
         uint itemId,
         uint tokenId,
-        uint viewFee,
+        uint price,
         address indexed seller
     );
 
-    event PaidForView(
+    event Purchased(
         uint itemId,
         uint tokenId,
-        uint viewFee,
-        address indexed viewer
+        uint price,
+        address indexed buyer
     );
+
+    event VideoNFTListed(uint256 tokenId, uint256 price); 
 
     mapping(uint => Item) public items; 
     mapping(uint => uint) public listedItems; 
+    mapping(uint => mapping(address => bool)) public hasAccessToVideo;
 
-    constructor() ERC721("MyNft", "MNFT") {}
+    constructor() ERC721("VideoNFT", "VNT") {}
 
-    function mint(string memory _tokenURI, uint _viewFee) external returns(uint) {
+    function mint(string memory _tokenURI, uint _price) external returns(uint) {
         tokenCount++; 
         itemCount++; 
+
         _safeMint(msg.sender, tokenCount); 
         _setTokenURI(tokenCount, _tokenURI); 
-
+        
         items[itemCount] = Item(
             itemCount,
             tokenCount,
-            _viewFee,
+            _price,
             payable(msg.sender),
-            false,
-            address(0),
-            false 
+            false
         );
 
-        emit Offered(itemCount, tokenCount, _viewFee, msg.sender);
+        emit Offered(
+            itemCount,
+            tokenCount,
+            _price,
+            msg.sender
+        );
 
-        listNFT(tokenCount, _viewFee); 
+        listVideoNFT(tokenCount, _price); 
+
         return tokenCount; 
     }
 
-    function listNFT(uint256 tokenId, uint256 _viewFee) public {
+    function listVideoNFT(uint256 tokenId, uint256 price) public {
         require(ownerOf(tokenId) == msg.sender, "You do not own this NFT");
-        require(_viewFee > 0, "View fee must be greater than 0");
+        require(price > 0, "Price must be greater than 0");
 
-        listedItems[tokenId] = _viewFee; 
-        emit Offered(tokenId, tokenId, _viewFee, msg.sender); 
+        listedItems[tokenId] = price; 
+        emit VideoNFTListed(tokenId, price); 
     }
 
-    function payForView(uint _itemId) external payable {
-        Item storage item = items[_itemId];
-        uint _viewFee = item.viewFee;
-        require(msg.value >= _viewFee, "Not enough ether to cover view fee");
-        require(msg.sender != item.seller, "Seller cannot pay for their own view");
-        require(!item.hasPaidForView, "You have already paid to view this NFT");
-        require(!item.sold, "Item has been sold already");
+    function purchaseItem(uint _itemId) external payable {
+        uint _totalPrice = getTotalPrice(_itemId); 
+        Item storage item = items[_itemId]; 
+        require(_itemId > 0 && _itemId <= itemCount, "Item doesn't exist");
+        require(msg.value >= _totalPrice, "Not enough ether to cover item price");
+        require(msg.sender != item.seller,"seller cannot buy nft");
 
-        item.seller.transfer(_viewFee);
+        item.seller.transfer(item.price);
+        item.sold = true; 
+        hasAccessToVideo[item.tokenId][msg.sender] = true; 
 
-
-        item.hasPaidForView = true;
-        item.viewer = msg.sender;
-
-        emit PaidForView(_itemId, item.tokenId, item.viewFee, msg.sender);
+        emit Purchased(
+            _itemId,
+            item.tokenId,
+            item.price,
+            msg.sender
+        );
     }
 
-    function markAsSold(uint _itemId) external {
-        Item storage item = items[_itemId];
-        require(msg.sender == item.seller, "Only seller can mark as sold");
-        item.sold = true;
+    function getTotalPrice(uint _itemId) view public returns(uint) {
+        return (items[_itemId].price * (100 + 3)) / 100; // Add 3% marketplace fee
     }
 
-    function hasPaidForView(uint _itemId, address _viewer) external view returns(bool) {
-        return items[_itemId].viewer == _viewer && items[_itemId].hasPaidForView;
+    function hasPurchased(uint256 tokenId, address user) external view returns(bool) {
+        return hasAccessToVideo[tokenId][user];
     }
 }
