@@ -159,4 +159,3 @@ const Home = ({ mergedContract }) => {
 };
 
 export default Home;
-  
