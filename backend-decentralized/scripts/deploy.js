@@ -37,3 +37,8 @@ async function main() {
 
 // new one
 //0xF795C9768cDd370B2B1C71038388D8218D45f01c
+
+
+// //Compiled 1 Solidity file successfully (evm target: paris).
+// Deploying contracts with the account: 0xEA29129049A8B3fB0b2318b4aF2c2B45f459Eea7
+// MNFT contract deployed to: 0x6e93C9AEb54A5A04e772c48304fa433F02C79976

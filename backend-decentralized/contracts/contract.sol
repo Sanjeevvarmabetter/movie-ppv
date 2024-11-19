@@ -37,7 +37,7 @@ contract VideoNFTMarketplace is ERC721URIStorage {
 
     constructor() ERC721("VideoNFT", "VNT") {}
 
-    // Mint new VideoNFT and list it for sale
+
     function mint(string memory _tokenURI, uint _price) external returns(uint) {
         tokenCount++; 
         itemCount++; 
@@ -65,7 +65,7 @@ contract VideoNFTMarketplace is ERC721URIStorage {
         return tokenCount; 
     }
 
-    // List the NFT for sale at a price
+
     function listVideoNFT(uint256 tokenId, uint256 price) public {
         require(ownerOf(tokenId) == msg.sender, "You do not own this NFT");
         require(price > 0, "Price must be greater than 0");
@@ -84,7 +84,7 @@ contract VideoNFTMarketplace is ERC721URIStorage {
 
         item.seller.transfer(item.price); 
         item.sold = true; 
-        hasAccessToVideo[item.tokenId][msg.sender] = true; // Grant access to the video for the buyer
+        hasAccessToVideo[item.tokenId][msg.sender] = true; 
 
         emit Purchased(
             _itemId,
