@@ -12,7 +12,7 @@ const Navigation = ({ web3Handler, account }) => {
                 <Navbar.Toggle aria-controls="responsive-navbar-nav" />
                 <Navbar.Collapse id="responsive-navbar-nav">
                     <Nav className="me-auto">
-            <h1 className="heading">Video PPV</h1>
+            <h1 className="heading">Video PPV-Taiko Hekla (sanjeev)</h1>
                         <Nav.Link as={Link} to="/">Home</Nav.Link>
                         <Nav.Link as={Link} to="/create">Create</Nav.Link>
 

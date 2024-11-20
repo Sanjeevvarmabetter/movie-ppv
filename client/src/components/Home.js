@@ -7,7 +7,7 @@ const Marketplace = ({ mergedContract }) => {
   const [items, setItems] = useState([]);
   const [error, setError] = useState(null);
   const [purchasing, setPurchasing] = useState(false);
-  const [access, setAccess] = useState({}); // Store access state
+  const [access, setAccess] = useState({}); 
 
   // Load items from the marketplace
   const loadItems = async () => {
@@ -21,6 +21,12 @@ const Marketplace = ({ mergedContract }) => {
         const tokenURI = await mergedContract.tokenURI(item.tokenId);
         const metadata = await (await fetch(tokenURI)).json();
 
+        // Check if the current user has purchased this token
+        const hasAccess = await mergedContract.hasPurchased(
+          item.tokenId,
+          window.ethereum.selectedAddress
+        );
+
         loadedItems.push({
           itemId: item.itemId.toString(),
           tokenId: item.tokenId.toString(),
@@ -29,11 +35,9 @@ const Marketplace = ({ mergedContract }) => {
           name: metadata.name,
           description: metadata.description,
           video: metadata.video,
-          sold: item.sold,
+          sold: item.sold, // Still track if sold for other purposes
         });
 
-        // Check access for each video
-        const hasAccess = await mergedContract.hasPurchased(item.tokenId, window.ethereum.selectedAddress);
         setAccess((prev) => ({ ...prev, [item.tokenId]: hasAccess }));
       }
 
@@ -55,11 +59,11 @@ const Marketplace = ({ mergedContract }) => {
       const tx = await mergedContract.purchaseItem(item.itemId, { value: totalPrice });
       await tx.wait();
 
-      // Grant access to the purchased video
+      
       setAccess((prev) => ({ ...prev, [item.tokenId]: true }));
     } catch (err) {
       console.error("Purchase error:", err);
-      setError("Failed to purchase item. Check your wallet balance.");
+      setError("seller cant buy, listed nft.");
     } finally {
       setPurchasing(false);
     }
@@ -120,7 +124,7 @@ const Marketplace = ({ mergedContract }) => {
                 <p>Price: {item.price} ETH</p>
                 <Button
                   onClick={() => buyItem(item)}
-                  disabled={purchasing || access[item.tokenId] || item.sold}
+                  disabled={purchasing || access[item.tokenId]}
                 >
                   {purchasing && !access[item.tokenId]
                     ? "Processing..."
